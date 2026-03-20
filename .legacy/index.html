@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wedding Planner</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f5f4f0;
+  --color-bg-tertiary: #eeede8;
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #6b6b66;
+  --color-text-tertiary: #9e9e98;
+  --color-border: rgba(0,0,0,0.12);
+  --color-border-md: rgba(0,0,0,0.22);
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1c1c1a;
+    --color-bg-secondary: #252523;
+    --color-bg-tertiary: #2e2e2b;
+    --color-text-primary: #f0efe8;
+    --color-text-secondary: #9e9e98;
+    --color-text-tertiary: #6b6b66;
+    --color-border: rgba(255,255,255,0.1);
+    --color-border-md: rgba(255,255,255,0.2);
+  }
+}
+body { font-family: var(--font); background: var(--color-bg-tertiary); color: var(--color-text-primary); min-height: 100vh; padding: 1rem; }
+.app { max-width: 880px; margin: 0 auto; background: var(--color-bg-tertiary); }
+.header { text-align: center; padding: 1.5rem 0 1rem; }
+.header h1 { font-size: 50px; font-weight: 600; letter-spacing: -0.4px; }
+.header p { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+.tabs { display: flex; gap: 4px; border-bottom: 0.5px solid var(--color-border); margin-bottom: 1.5rem; }
+.tab { padding: 9px 18px; font-size: 14px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; color: var(--color-text-secondary); font-family: var(--font); transition: all 0.15s; margin-bottom: -1px; }
+.tab:hover { color: var(--color-text-primary); }
+.tab.active { color: var(--color-text-primary); border-bottom-color: var(--color-text-primary); font-weight: 500; }
+.section { display: none; }
+.section.active { display: block; }
+.row { display: flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.card { background: var(--color-bg); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; }
+.card-full { flex: 1 1 100%; }
+.metric-card { background: var(--color-bg-secondary); border-radius: var(--radius-md); padding: 1rem; flex: 1 1 140px; }
+.metric-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-value { font-size: 24px; font-weight: 500; }
+.section-title { font-size: 15px; font-weight: 500; margin-bottom: 12px; }
+.btn { padding: 7px 14px; font-size: 13px; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); background: none; cursor: pointer; color: var(--color-text-primary); font-family: var(--font); transition: background 0.1s; }
+.btn:hover { background: var(--color-bg-secondary); }
+.btn-primary { background: var(--color-text-primary); color: var(--color-bg); border-color: var(--color-text-primary); }
+.btn-primary:hover { opacity: 0.88; background: var(--color-text-primary); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+input, select, textarea { width: 100%; padding: 8px 10px; font-size: 14px; border: 0.5px solid var(--color-border-md); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text-primary); font-family: var(--font); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-text-secondary); }
+textarea { resize: vertical; min-height: 60px; }
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 10px; }
+.form-group label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; display: block; }
+.vendor-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 0.5px solid var(--color-border); }
+.vendor-item:last-child { border-bottom: none; }
+.vendor-info { flex: 1; min-width: 0; }
+.vendor-name { font-size: 14px; font-weight: 500; }
+.vendor-meta { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.vendor-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+.badge-researching { background: #FAEEDA; color: #854F0B; }
+.badge-contacted { background: #E6F1FB; color: #185FA5; }
+.badge-booked { background: #EAF3DE; color: #3B6D11; }
+.badge-declined { background: #FCEBEB; color: #A32D2D; }
+.stars { color: #EF9F27; font-size: 13px; letter-spacing: 1px; margin-top: 3px; }
+.budget-row { display: grid; grid-template-columns: 2fr 1fr 1fr 80px; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); font-size: 14px; }
+.budget-row:last-child { border-bottom: none; }
+.budget-header { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; padding-bottom: 6px; border-bottom: 0.5px solid var(--color-border-md); margin-bottom: 4px; }
+.progress-bar { height: 4px; background: var(--color-bg-secondary); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+.progress-fill { height: 100%; border-radius: 2px; }
+.guest-row { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 80px; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 0.5px solid var(--color-border); font-size: 13px; }
+.guest-row:last-child { border-bottom: none; }
+.guest-header { font-size: 12px; color: var(--color-text-secondary); font-weight: 500; padding-bottom: 6px; border-bottom: 0.5px solid var(--color-border-md); }
+.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border); }
+.task-item:last-child { border-bottom: none; }
+.task-check { width: 16px; height: 16px; border: 1.5px solid var(--color-border-md); border-radius: 3px; cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; }
+.task-check.done { background: var(--color-text-primary); border-color: var(--color-text-primary); }
+.task-check.done::after { content: ''; width: 8px; height: 5px; border-left: 1.5px solid var(--color-bg); border-bottom: 1.5px solid var(--color-bg); transform: rotate(-45deg) translateY(-1px); display: block; }
+.task-title { font-size: 14px; }
+.task-title.done { text-decoration: line-through; color: var(--color-text-tertiary); }
+.task-when { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.tag-month { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 99px; background: var(--color-bg-secondary); color: var(--color-text-secondary); }
+.ai-chat { border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; }
+.ai-messages { padding: 12px; min-height: 80px; max-height: 1000px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.ai-msg { padding: 9px 13px; border-radius: var(--radius-md); font-size: 13px; line-height: 1.6; max-width: 88%; white-space: pre-wrap; }
+.ai-msg.assistant { background: var(--color-bg-secondary); align-self: flex-start; }
+.ai-msg.user { background: var(--color-text-primary); color: var(--color-bg); align-self: flex-end; }
+.ai-input-row { display: flex; gap: 8px; padding: 10px 12px; border-top: 0.5px solid var(--color-border); }
+.ai-input-row input { flex: 1; }
+.quick-btns { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 12px 10px; }
+.quick-btn { font-size: 12px; padding: 4px 10px; border: 0.5px solid var(--color-border-md); border-radius: 99px; background: none; cursor: pointer; color: var(--color-text-secondary); font-family: var(--font); white-space: nowrap; transition: all 0.1s; }
+.quick-btn:hover { background: var(--color-bg-secondary); color: var(--color-text-primary); }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-start; justify-content: center; padding-top: 60px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--color-bg); border: 0.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 16px; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.empty-state { text-align: center; padding: 2rem; color: var(--color-text-secondary); font-size: 14px; }
+.spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--color-border-md); border-top-color: var(--color-text-secondary); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 600px) {
+  .budget-row { grid-template-columns: 1fr 1fr; }
+  .guest-row { grid-template-columns: 1fr 1fr; }
+  .tabs { overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <h1>Wedding planner</h1>
+    <p>Plan the perfect day, together</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('vendors',this)">Vendors</button>
+    <button class="tab" onclick="showTab('budget',this)">Budget</button>
+    <button class="tab" onclick="showTab('guests',this)">Guests</button>
+    <button class="tab" onclick="showTab('tasks',this)">Checklist</button>
+    <button class="tab" onclick="showTab('ai',this)">AI assistant</button>
+  </div>
+
+  <!-- VENDORS -->
+  <div class="section active" id="tab-vendors">
+    <div class="row">
+      <div class="metric-card"><div class="metric-label">Total vendors</div><div class="metric-value" id="v-total">0</div></div>
+      <div class="metric-card"><div class="metric-label">Booked</div><div class="metric-value" id="v-booked">0</div></div>
+      <div class="metric-card"><div class="metric-label">Researching</div><div class="metric-value" id="v-researching">0</div></div>
+      <div class="metric-card"><div class="metric-label">Contacted</div><div class="metric-value" id="v-contacted">0</div></div>
+    </div>
+    <div class="card card-full">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <span class="section-title" style="margin:0;">Vendor research</span>
+        <div style="display:flex;gap:8px;">
+          <select id="vendor-filter" onchange="renderVendors()" style="width:150px;padding:5px 8px;font-size:13px;">
+            <option value="">All categories</option>
+            <option>Venue</option><option>Catering</option><option>Photography</option>
+            <option>Florals</option><option>Music / DJ</option><option>Cake</option>
+            <option>Hair & makeup</option><option>Officiant</option><option>Other</option>
+          </select>
+          <button class="btn btn-sm btn-primary" onclick="openVendorModal()">+ Add vendor</button>
+        </div>
+      </div>
+      <div id="vendor-list"><div class="empty-state">No vendors yet — add your first one above.</div></div>
+    </div>
+  </div>
+
+  <!-- BUDGET -->
+  <div class="section" id="tab-budget">
+    <div class="row">
+      <div class="metric-card"><div class="metric-label">Total budget</div><div class="metric-value" id="b-total">$0</div></div>
+      <div class="metric-card"><div class="metric-label">Estimated spend</div><div class="metric-value" id="b-est">$0</div></div>
+      <div class="metric-card"><div class="metric-label">Actual spend</div><div class="metric-value" id="b-actual">$0</div></div>
+      <div class="metric-card"><div class="metric-label">Remaining</div><div class="metric-value" id="b-remain">$0</div></div>
+    </div>
+    <div class="card card-full">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span class="section-title" style="margin:0;">Budget breakdown</span>
+        <button class="btn btn-sm btn-primary" onclick="openBudgetModal()">+ Add category</button>
+      </div>
+      <div class="budget-row budget-header"><span>Category</span><span>Estimated</span><span>Actual</span><span></span></div>
+      <div id="budget-list"><div class="empty-state">No budget categories yet.</div></div>
+    </div>
+  </div>
+
+  <!-- GUESTS -->
+  <div class="section" id="tab-guests">
+    <div class="row">
+      <div class="metric-card"><div class="metric-label">Invited</div><div class="metric-value" id="g-total">0</div></div>
+      <div class="metric-card"><div class="metric-label">Attending</div><div class="metric-value" id="g-yes">0</div></div>
+      <div class="metric-card"><div class="metric-label">Declined</div><div class="metric-value" id="g-no">0</div></div>
+      <div class="metric-card"><div class="metric-label">Awaiting RSVP</div><div class="metric-value" id="g-pending">0</div></div>
+    </div>
+    <div class="card card-full">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span class="section-title" style="margin:0;">Guest list</span>
+        <button class="btn btn-sm btn-primary" onclick="openGuestModal()">+ Add guest</button>
+      </div>
+      <div class="guest-row guest-header"><span>Name</span><span>Group</span><span>RSVP</span><span>Meal</span><span></span></div>
+      <div id="guest-list"><div class="empty-state">No guests added yet.</div></div>
+    </div>
+  </div>
+
+  <!-- TASKS -->
+  <div class="section" id="tab-tasks">
+    <div class="row">
+      <div class="metric-card"><div class="metric-label">Total tasks</div><div class="metric-value" id="t-total">0</div></div>
+      <div class="metric-card"><div class="metric-label">Completed</div><div class="metric-value" id="t-done">0</div></div>
+      <div class="metric-card"><div class="metric-label">Remaining</div><div class="metric-value" id="t-left">0</div></div>
+    </div>
+    <div class="card card-full">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <span class="section-title" style="margin:0;">Planning checklist</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm" id="gen-btn" onclick="generateTasks()">AI generate tasks ✦</button>
+          <button class="btn btn-sm btn-primary" onclick="openTaskModal()">+ Add task</button>
+        </div>
+      </div>
+      <div id="task-list"><div class="empty-state">No tasks yet. Use "AI generate tasks" to create a full timeline!</div></div>
+    </div>
+  </div>
+
+  <!-- AI ASSISTANT -->
+  <div class="section" id="tab-ai">
+    <div class="card card-full">
+      <div class="section-title">AI wedding assistant</div>
+      <div class="ai-chat">
+        <div class="ai-messages" id="ai-messages">
+          <div class="ai-msg assistant">Hi! I'm your wedding planning assistant. I can help you research vendors, suggest questions to ask venues, generate task timelines, estimate budgets, and more. What would you like help with?</div>
+        </div>
+        <div class="quick-btns">
+          <button class="quick-btn" onclick="quickAsk('What questions should I ask a wedding venue?')">Venue questions</button>
+          <button class="quick-btn" onclick="quickAsk('Give me a month-by-month wedding planning timeline')">Planning timeline</button>
+          <button class="quick-btn" onclick="quickAsk('What is a realistic wedding budget breakdown?')">Budget guide</button>
+          <button class="quick-btn" onclick="quickAsk('What should I look for in a wedding photographer?')">Photographer tips</button>
+          <button class="quick-btn" onclick="quickAsk('Help me write questions to ask a caterer')">Caterer questions</button>
+        </div>
+        <div class="ai-input-row">
+          <input type="text" id="ai-input" placeholder="Ask anything about wedding planning..." onkeydown="if(event.key==='Enter')sendAI()" />
+          <button class="btn btn-primary btn-sm" onclick="sendAI()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VENDOR MODAL -->
+<div class="modal-overlay" id="vendor-modal">
+  <div class="modal">
+    <h3 id="vm-title">Add vendor</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Name</label><input id="vm-name" placeholder="e.g. The Grand Ballroom" /></div>
+      <div class="form-group"><label>Category</label>
+        <select id="vm-cat"><option>Venue</option><option>Catering</option><option>Photography</option><option>Florals</option><option>Music / DJ</option><option>Cake</option><option>Hair & makeup</option><option>Officiant</option><option>Other</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Contact / website</label><input id="vm-contact" placeholder="Email, phone, or URL" /></div>
+      <div class="form-group"><label>Estimated price</label><input id="vm-price" placeholder="e.g. $3,000" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Status</label>
+        <select id="vm-status"><option value="researching">Researching</option><option value="contacted">Contacted</option><option value="booked">Booked</option><option value="declined">Declined</option></select>
+      </div>
+      <div class="form-group"><label>Rating (1–5)</label><input id="vm-rating" type="number" min="1" max="5" placeholder="e.g. 4" /></div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>Notes</label><textarea id="vm-notes" placeholder="Anything to remember about this vendor..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('vendor-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveVendor()">Save vendor</button>
+    </div>
+  </div>
+</div>
+
+<!-- BUDGET MODAL -->
+<div class="modal-overlay" id="budget-modal">
+  <div class="modal">
+    <h3>Add budget category</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Category name</label><input id="bm-name" placeholder="e.g. Venue" /></div>
+      <div class="form-group"><label>Total budget ($)</label><input id="bm-budget" type="number" placeholder="e.g. 5000" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Estimated cost ($)</label><input id="bm-est" type="number" placeholder="e.g. 4500" /></div>
+      <div class="form-group"><label>Actual paid ($)</label><input id="bm-actual" type="number" placeholder="e.g. 0" /></div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>Notes</label><textarea id="bm-notes" placeholder="Deposit due dates, vendor info..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('budget-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBudget()">Save category</button>
+    </div>
+  </div>
+</div>
+
+<!-- GUEST MODAL -->
+<div class="modal-overlay" id="guest-modal">
+  <div class="modal">
+    <h3>Add guest</h3>
+    <div class="form-row">
+      <div class="form-group"><label>Full name</label><input id="gm-name" placeholder="e.g. Jane Smith" /></div>
+      <div class="form-group"><label>Group / side</label><input id="gm-group" placeholder="e.g. Bride's family" /></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>RSVP</label>
+        <select id="gm-rsvp"><option value="pending">Pending</option><option value="yes">Attending</option><option value="no">Declined</option></select>
+      </div>
+      <div class="form-group"><label>Meal choice</label>
+        <select id="gm-meal"><option value="">Not set</option><option>Chicken</option><option>Fish</option><option>Vegetarian</option><option>Vegan</option><option>Kids meal</option></select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:10px;"><label>Notes (dietary, plus-one, etc.)</label><textarea id="gm-notes" placeholder="Any special notes..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('guest-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGuest()">Save guest</button>
+    </div>
+  </div>
+</div>
+
+<!-- TASK MODAL -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <h3>Add task</h3>
+    <div class="form-group" style="margin-bottom:10px;"><label>Task description</label><input id="tm-task" placeholder="e.g. Book wedding venue" /></div>
+    <div class="form-row">
+      <div class="form-group"><label>When (months out)</label>
+        <select id="tm-when">
+          <option>12+ months out</option><option>10-12 months out</option><option>8-10 months out</option>
+          <option>6-8 months out</option><option>4-6 months out</option><option>2-4 months out</option>
+          <option>1-2 months out</option><option>2 weeks out</option><option>Week of wedding</option><option>Day of</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Category</label>
+        <select id="tm-cat">
+          <option>Venue & logistics</option><option>Vendors</option><option>Attire</option>
+          <option>Beauty</option><option>Guest list</option><option>Decor</option>
+          <option>Food & drink</option><option>Budget</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let vendors = [], budgets = [], guests = [], tasks = [], editVendorIdx = -1, aiHistory = [];
+
+function showTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+}
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openVendorModal(idx) {
+  editVendorIdx = idx !== undefined ? idx : -1;
+  const v = editVendorIdx >= 0 ? vendors[editVendorIdx] : {};
+  document.getElementById('vm-title').textContent = editVendorIdx >= 0 ? 'Edit vendor' : 'Add vendor';
+  document.getElementById('vm-name').value = v.name || '';
+  document.getElementById('vm-cat').value = v.cat || 'Venue';
+  document.getElementById('vm-contact').value = v.contact || '';
+  document.getElementById('vm-price').value = v.price || '';
+  document.getElementById('vm-status').value = v.status || 'researching';
+  document.getElementById('vm-rating').value = v.rating || '';
+  document.getElementById('vm-notes').value = v.notes || '';
+  openModal('vendor-modal');
+}
+function saveVendor() {
+  const v = { name: document.getElementById('vm-name').value.trim(), cat: document.getElementById('vm-cat').value, contact: document.getElementById('vm-contact').value.trim(), price: document.getElementById('vm-price').value.trim(), status: document.getElementById('vm-status').value, rating: document.getElementById('vm-rating').value, notes: document.getElementById('vm-notes').value.trim() };
+  if (!v.name) return;
+  if (editVendorIdx >= 0) vendors[editVendorIdx] = v; else vendors.push(v);
+  closeModal('vendor-modal'); renderVendors();
+}
+function deleteVendor(idx) { vendors.splice(idx, 1); renderVendors(); }
+function renderVendors() {
+  const filter = document.getElementById('vendor-filter').value;
+  const filtered = vendors.filter(v => !filter || v.cat === filter);
+  document.getElementById('v-total').textContent = vendors.length;
+  document.getElementById('v-booked').textContent = vendors.filter(v => v.status === 'booked').length;
+  document.getElementById('v-researching').textContent = vendors.filter(v => v.status === 'researching').length;
+  document.getElementById('v-contacted').textContent = vendors.filter(v => v.status === 'contacted').length;
+  const list = document.getElementById('vendor-list');
+  if (!filtered.length) { list.innerHTML = '<div class="empty-state">No vendors match this filter.</div>'; return; }
+  list.innerHTML = filtered.map(v => {
+    const ri = vendors.indexOf(v);
+    const stars = v.rating ? '★'.repeat(parseInt(v.rating)) + '☆'.repeat(5-parseInt(v.rating)) : '';
+    return `<div class="vendor-item"><div class="vendor-info"><div class="vendor-name">${v.name}</div><div class="vendor-meta">${v.cat}${v.price?' · '+v.price:''}${v.contact?' · '+v.contact:''}</div>${v.notes?'<div class="vendor-meta" style="font-style:italic;">'+v.notes+'</div>':''}${stars?'<div class="stars">'+stars+'</div>':''}</div><div class="vendor-actions"><span class="badge badge-${v.status}">${v.status.charAt(0).toUpperCase()+v.status.slice(1)}</span><button class="btn btn-sm" onclick="openVendorModal(${ri})">Edit</button><button class="btn btn-sm" onclick="deleteVendor(${ri})" style="color:#A32D2D;">Del</button></div></div>`;
+  }).join('');
+}
+
+function openBudgetModal() { ['bm-name','bm-budget','bm-est','bm-actual','bm-notes'].forEach(id => document.getElementById(id).value = ''); openModal('budget-modal'); }
+function saveBudget() {
+  const b = { name: document.getElementById('bm-name').value.trim(), budget: parseFloat(document.getElementById('bm-budget').value)||0, est: parseFloat(document.getElementById('bm-est').value)||0, actual: parseFloat(document.getElementById('bm-actual').value)||0, notes: document.getElementById('bm-notes').value.trim() };
+  if (!b.name) return;
+  budgets.push(b); closeModal('budget-modal'); renderBudget();
+}
+function deleteBudget(idx) { budgets.splice(idx,1); renderBudget(); }
+function renderBudget() {
+  const totBudget = budgets.reduce((s,b)=>s+b.budget,0), totEst = budgets.reduce((s,b)=>s+b.est,0), totActual = budgets.reduce((s,b)=>s+b.actual,0);
+  document.getElementById('b-total').textContent = '$'+totBudget.toLocaleString();
+  document.getElementById('b-est').textContent = '$'+totEst.toLocaleString();
+  document.getElementById('b-actual').textContent = '$'+totActual.toLocaleString();
+  document.getElementById('b-remain').textContent = '$'+(totBudget-totActual).toLocaleString();
+  const list = document.getElementById('budget-list');
+  if (!budgets.length) { list.innerHTML = '<div class="empty-state">No categories yet.</div>'; return; }
+  list.innerHTML = budgets.map((b,i) => {
+    const pct = b.budget>0 ? Math.min(100,Math.round(b.actual/b.budget*100)) : 0;
+    const over = b.actual>b.budget;
+    return `<div class="budget-row"><div><div>${b.name}</div>${b.notes?'<div style="font-size:12px;color:var(--color-text-secondary);">'+b.notes+'</div>':''}<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${over?'#E24B4A':'#1D9E75'};"></div></div></div><div>$${b.est.toLocaleString()}</div><div style="color:${over?'#A32D2D':'inherit'}">$${b.actual.toLocaleString()}</div><div><button class="btn btn-sm" onclick="deleteBudget(${i})">Del</button></div></div>`;
+  }).join('');
+}
+
+function openGuestModal() { ['gm-name','gm-group','gm-notes'].forEach(id=>document.getElementById(id).value=''); document.getElementById('gm-rsvp').value='pending'; document.getElementById('gm-meal').value=''; openModal('guest-modal'); }
+function saveGuest() {
+  const g = { name: document.getElementById('gm-name').value.trim(), group: document.getElementById('gm-group').value.trim(), rsvp: document.getElementById('gm-rsvp').value, meal: document.getElementById('gm-meal').value, notes: document.getElementById('gm-notes').value.trim() };
+  if (!g.name) return;
+  guests.push(g); closeModal('guest-modal'); renderGuests();
+}
+function deleteGuest(idx) { guests.splice(idx,1); renderGuests(); }
+function renderGuests() {
+  document.getElementById('g-total').textContent = guests.length;
+  document.getElementById('g-yes').textContent = guests.filter(g=>g.rsvp==='yes').length;
+  document.getElementById('g-no').textContent = guests.filter(g=>g.rsvp==='no').length;
+  document.getElementById('g-pending').textContent = guests.filter(g=>g.rsvp==='pending').length;
+  const list = document.getElementById('guest-list');
+  if (!guests.length) { list.innerHTML = '<div class="empty-state">No guests added yet.</div>'; return; }
+  const rc = {yes:'#3B6D11',no:'#A32D2D',pending:'#854F0B'}, rl = {yes:'Attending',no:'Declined',pending:'Pending'};
+  list.innerHTML = guests.map((g,i)=>`<div class="guest-row"><div><div style="font-size:14px;">${g.name}</div>${g.notes?'<div style="font-size:12px;color:var(--color-text-secondary);">'+g.notes+'</div>':''}</div><div style="color:var(--color-text-secondary);">${g.group||'—'}</div><div style="color:${rc[g.rsvp]};">${rl[g.rsvp]}</div><div style="color:var(--color-text-secondary);">${g.meal||'—'}</div><div><button class="btn btn-sm" onclick="deleteGuest(${i})">Del</button></div></div>`).join('');
+}
+
+function openTaskModal() { document.getElementById('tm-task').value=''; openModal('task-modal'); }
+function saveTask(obj) {
+  const t = obj || { task: document.getElementById('tm-task').value.trim(), when: document.getElementById('tm-when').value, cat: document.getElementById('tm-cat').value, done: false };
+  if (!t.task) return;
+  tasks.push(t); if (!obj) closeModal('task-modal'); renderTasks();
+}
+function toggleTask(idx) { tasks[idx].done = !tasks[idx].done; renderTasks(); }
+function deleteTask(idx) { tasks.splice(idx,1); renderTasks(); }
+function renderTasks() {
+  const done = tasks.filter(t=>t.done).length;
+  document.getElementById('t-total').textContent = tasks.length;
+  document.getElementById('t-done').textContent = done;
+  document.getElementById('t-left').textContent = tasks.length - done;
+  const list = document.getElementById('task-list');
+  if (!tasks.length) { list.innerHTML = '<div class="empty-state">No tasks yet. Use "AI generate tasks" to create a full timeline!</div>'; return; }
+  const order = ['12+ months out','10-12 months out','8-10 months out','6-8 months out','4-6 months out','2-4 months out','1-2 months out','2 weeks out','Week of wedding','Day of'];
+  const groups = {};
+  tasks.forEach((t,i) => { if (!groups[t.when]) groups[t.when]=[]; groups[t.when].push({t,i}); });
+  let html = '';
+  order.forEach(w => {
+    if (!groups[w]) return;
+    html += `<div style="margin:14px 0 6px;"><span class="tag-month">${w}</span></div>`;
+    groups[w].forEach(({t,i}) => {
+      html += `<div class="task-item"><div class="task-check ${t.done?'done':''}" onclick="toggleTask(${i})"></div><div style="flex:1;"><div class="task-title ${t.done?'done':''}">${t.task}</div><div class="task-when">${t.cat}</div></div><button class="btn btn-sm" onclick="deleteTask(${i})" style="color:var(--color-text-secondary);">Del</button></div>`;
+    });
+  });
+  list.innerHTML = html;
+}
+
+async function generateTasks() {
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Generating...';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, messages:[{role:'user',content:'Generate a wedding planning checklist of 20 essential tasks. Respond ONLY with a JSON array of objects with keys: task (string), when (one of: "12+ months out","10-12 months out","8-10 months out","6-8 months out","4-6 months out","2-4 months out","1-2 months out","2 weeks out","Week of wedding","Day of"), cat (category string). No markdown, no preamble, just the JSON array.'}]}) });
+    const data = await res.json();
+    const text = data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    JSON.parse(text).forEach(t => saveTask({...t, done:false}));
+  } catch(e) { alert('Could not generate tasks. Please try again.'); }
+  btn.disabled = false; btn.innerHTML = 'AI generate tasks ✦';
+}
+
+async function sendAI() {
+  const input = document.getElementById('ai-input');
+  const msg = input.value.trim(); if (!msg) return;
+  input.value = '';
+  appendAIMsg(msg,'user'); aiHistory.push({role:'user',content:msg});
+  const el = appendAIMsg('...','assistant');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:'You are a warm, practical wedding planning assistant. Give concise, actionable advice.', messages:aiHistory }) });
+    const data = await res.json();
+    const reply = data.content.map(c=>c.text||'').join('').trim();
+    el.textContent = reply; aiHistory.push({role:'assistant',content:reply});
+  } catch(e) { el.textContent = 'Sorry, something went wrong. Please try again.'; }
+}
+function quickAsk(q) { document.getElementById('ai-input').value=q; sendAI(); }
+function appendAIMsg(text,role) {
+  const msgs = document.getElementById('ai-messages');
+  const el = document.createElement('div'); el.className='ai-msg '+role; el.textContent=text;
+  msgs.appendChild(el); msgs.scrollTop=msgs.scrollHeight; return el;
+}
+</script>
+</body>
+</html>
