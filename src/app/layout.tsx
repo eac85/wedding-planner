@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "With Grace - Wedding Planner",
+  title: "Wedding Planner",
   description: "Plan the perfect day together",
 };
 
