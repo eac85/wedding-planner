@@ -33,6 +33,16 @@ export default async function WeddingPage({
 
   const isOwner = membership?.role === "owner";
 
+  const memberLabels: Record<string, string> = {};
+  const { data: labelRows, error: labelsErr } = await supabase.rpc("wedding_member_labels", {
+    _wedding_id: weddingId,
+  });
+  if (!labelsErr) {
+    for (const row of (labelRows ?? []) as { user_id: string; label: string }[]) {
+      if (row?.user_id && row?.label) memberLabels[row.user_id] = row.label;
+    }
+  }
+
   const [
     { data: vendors },
     budgetResult,
@@ -110,6 +120,8 @@ export default async function WeddingPage({
       weddingId={weddingId}
       weddingName={wedding.name}
       isOwner={isOwner}
+      currentUserId={user.id}
+      memberLabels={memberLabels}
       initialVendors={vendors ?? []}
       initialBudgetCategories={budgetCategories ?? []}
       initialGuests={guests ?? []}

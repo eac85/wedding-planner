@@ -115,6 +115,7 @@ No markdown. No preamble. Output JSON only.`;
         when_label: t.when,
         cat: t.cat,
         done: false,
+        created_by: user.id,
       }));
 
     if (!tasksToInsert.length) {

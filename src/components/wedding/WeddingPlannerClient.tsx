@@ -15,6 +15,7 @@ type Vendor = {
   status: "researching" | "contacted" | "booked" | "declined";
   rating: number | null;
   notes: string;
+  created_by: string | null;
 };
 
 type BudgetCategory = {
@@ -25,6 +26,7 @@ type BudgetCategory = {
   est: number;
   actual: number;
   notes: string;
+  created_by: string | null;
 };
 
 type Guest = {
@@ -35,6 +37,7 @@ type Guest = {
   rsvp: "pending" | "yes" | "no";
   meal: string;
   notes: string;
+  created_by: string | null;
 };
 
 type Task = {
@@ -44,6 +47,7 @@ type Task = {
   when_label: string;
   cat: string;
   done: boolean;
+  created_by: string | null;
 };
 
 type Venue = {
@@ -57,6 +61,7 @@ type Venue = {
   contact: string;
   website: string;
   notes: string;
+  created_by: string | null;
 };
 
 type VenueResearch = {
@@ -68,6 +73,7 @@ type VenueResearch = {
   answer: string;
   source: string;
   status: "open" | "answered" | "closed";
+  created_by: string | null;
 };
 
 type AiMessage = { role: "user" | "assistant" | "system"; content: string; createdAt: string };
@@ -142,6 +148,8 @@ export default function WeddingPlannerClient({
   weddingId,
   weddingName,
   isOwner,
+  currentUserId,
+  memberLabels,
   initialVendors,
   initialBudgetCategories,
   initialGuests,
@@ -153,6 +161,8 @@ export default function WeddingPlannerClient({
   weddingId: string;
   weddingName: string;
   isOwner: boolean;
+  currentUserId: string;
+  memberLabels: Record<string, string>;
   initialVendors: Vendor[];
   initialBudgetCategories: BudgetCategory[];
   initialGuests: Guest[];
@@ -162,6 +172,18 @@ export default function WeddingPlannerClient({
   initialAiMessages: AiMessage[];
 }) {
   const supabase = useMemo(() => supabaseBrowserClient(), []);
+
+  function addedByLabel(createdBy: string | null | undefined) {
+    if (createdBy == null || createdBy === "") return null;
+    if (createdBy === currentUserId) return "You";
+    return memberLabels[createdBy] ?? "Member";
+  }
+
+  function renderAddedBy(createdBy: string | null | undefined) {
+    const label = addedByLabel(createdBy);
+    if (!label) return null;
+    return <div className="added-by">Added by {label}</div>;
+  }
 
   const [activeTab, setActiveTab] = useState<"venues" | "vendors" | "budget" | "guests" | "tasks" | "ai">("venues");
 
@@ -312,7 +334,11 @@ export default function WeddingPlannerClient({
       if (error || !data) return;
       setVenues((prev) => prev.map((x) => (x.id === editingVenueId ? (data as Venue) : x)));
     } else {
-      const { data, error } = await supabase.from("venues").insert(payload).select("*").single();
+      const { data, error } = await supabase
+        .from("venues")
+        .insert({ ...payload, created_by: currentUserId })
+        .select("*")
+        .single();
       if (error || !data) return;
       setVenues((prev) => [...prev, data as Venue]);
     }
@@ -361,7 +387,11 @@ export default function WeddingPlannerClient({
       source: venueResearchForm.source.trim(),
       status: venueResearchForm.status,
     };
-    const { data, error } = await supabase.from("venue_research").insert(payload).select("*").single();
+    const { data, error } = await supabase
+      .from("venue_research")
+      .insert({ ...payload, created_by: currentUserId })
+      .select("*")
+      .single();
     if (error || !data) return;
     setVenueResearch((prev) => [...prev, data as VenueResearch]);
     setVenueResearchModalOpen(false);
@@ -438,7 +468,11 @@ export default function WeddingPlannerClient({
       if (error || !data) return;
       setVendors((prev) => prev.map((x) => (x.id === editingVendorId ? (data as Vendor) : x)));
     } else {
-      const { data, error } = await supabase.from("vendors").insert(payload).select("*").single();
+      const { data, error } = await supabase
+        .from("vendors")
+        .insert({ ...payload, created_by: currentUserId })
+        .select("*")
+        .single();
       if (error || !data) return;
       setVendors((prev) => [...prev, data as Vendor]);
     }
@@ -482,7 +516,7 @@ export default function WeddingPlannerClient({
 
     const { data, error } = await supabase
       .from("budget_categories")
-      .insert(payload)
+      .insert({ ...payload, created_by: currentUserId })
       .select("*")
       .single();
     if (error || !data) return;
@@ -525,7 +559,11 @@ export default function WeddingPlannerClient({
       notes: guestForm.notes.trim(),
     };
 
-    const { data, error } = await supabase.from("guests").insert(payload).select("*").single();
+    const { data, error } = await supabase
+      .from("guests")
+      .insert({ ...payload, created_by: currentUserId })
+      .select("*")
+      .single();
     if (error || !data) return;
 
     setGuests((prev) => [...prev, data as Guest]);
@@ -567,7 +605,11 @@ export default function WeddingPlannerClient({
       done: false,
     };
 
-    const { data, error } = await supabase.from("tasks").insert(payload).select("*").single();
+    const { data, error } = await supabase
+      .from("tasks")
+      .insert({ ...payload, created_by: currentUserId })
+      .select("*")
+      .single();
     if (error || !data) return;
 
     setTasks((prev) => [...prev, data as Task]);
@@ -774,6 +816,7 @@ export default function WeddingPlannerClient({
                     </div>
                   ) : null}
                   {v.notes ? <div className="vendor-meta" style={{ fontStyle: "italic" }}>{v.notes}</div> : null}
+                  {renderAddedBy(v.created_by)}
                 </div>
                 <div className="vendor-actions">
                   <span className={`badge badge-${v.status === "shortlisted" ? "contacted" : v.status === "touring" ? "researching" : v.status}`}>
@@ -809,6 +852,7 @@ export default function WeddingPlannerClient({
                     {r.question ? <div className="vendor-meta">Q: {r.question}</div> : null}
                     {r.answer ? <div className="vendor-meta">A: {r.answer}</div> : null}
                     {r.source ? <div className="vendor-meta">Source: {r.source}</div> : null}
+                    {renderAddedBy(r.created_by)}
                   </div>
                   <div className="vendor-actions">
                     <span className={`badge badge-${r.status === "open" ? "researching" : r.status === "answered" ? "booked" : "declined"}`}>
@@ -890,6 +934,7 @@ export default function WeddingPlannerClient({
                         </div>
                       ) : null}
                       {stars ? <div className="stars">{stars}</div> : null}
+                      {renderAddedBy(v.created_by)}
                     </div>
                     <div className="vendor-actions">
                       <span className={`badge badge-${v.status}`}>
@@ -961,6 +1006,7 @@ export default function WeddingPlannerClient({
                     <div>
                       <div>{b.name}</div>
                       {b.notes ? <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>{b.notes}</div> : null}
+                      {renderAddedBy(b.created_by)}
                       <div className="progress-bar">
                         <div
                           className="progress-fill"
@@ -1035,6 +1081,7 @@ export default function WeddingPlannerClient({
                   <div>
                     <div style={{ fontSize: 14 }}>{g.name}</div>
                     {g.notes ? <div style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>{g.notes}</div> : null}
+                    {renderAddedBy(g.created_by)}
                   </div>
                   <div style={{ color: "var(--color-text-secondary)" }}>{g.group_name || "—"}</div>
                   <div style={{ color: GUEST_RSVP_COLOR[g.rsvp] }}>{GUEST_RSVP_LABEL[g.rsvp]}</div>
@@ -1104,6 +1151,7 @@ export default function WeddingPlannerClient({
                         <div style={{ flex: 1 }}>
                           <div className={`task-title${t.done ? " done" : ""}`}>{t.task}</div>
                           <div className="task-when">{t.cat}</div>
+                          {renderAddedBy(t.created_by)}
                         </div>
                         <button className="btn btn-sm" onClick={() => void deleteTask(t.id)} style={{ color: "var(--color-text-secondary)" }}>
                           Del
