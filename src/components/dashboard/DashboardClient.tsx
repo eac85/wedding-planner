@@ -117,7 +117,7 @@ export default function DashboardClient({ weddings }: { weddings: Wedding[] }) {
             <input
               value={newWeddingName}
               onChange={(e) => setNewWeddingName(e.target.value)}
-              placeholder="e.g. Emery + Grace"
+              placeholder="e.g. John + Jane"
             />
           </div>
 
